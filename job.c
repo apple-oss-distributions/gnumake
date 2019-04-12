@@ -373,6 +373,33 @@ _is_unixy_shell (const char *path)
 }
 #endif /* __EMX__ */
 
+#ifdef __APPLE__
+/* returns whether path is assumed to be a unix like shell. */
+int
+_is_posix_shell (const char *path)
+{
+  /* list of non unix shells */
+  const char *known_acceptable_posix_shells[] = {
+    "/bin/bash",
+    "/bin/dash",
+    "/bin/zsh",
+    "/usr/local/bin/ash",
+    NULL
+  };
+
+  unsigned i;
+
+  i = 0;
+  while (known_acceptable_posix_shells[i] != NULL) {
+    if (strcmp (path, known_acceptable_posix_shells[i]) == 0)
+      return 1; /* posix shell */
+    i++;
+  }
+
+  return strcmp(path, default_shell) == 0;
+}
+#endif
+
 
 /* Write an error message describing the exit status given in
    EXIT_CODE, EXIT_SIG, and COREDUMP, for the target TARGET_NAME.
@@ -2475,8 +2502,13 @@ construct_command_argv_internal (char *line, char **restp, char *shell,
 # endif
     }
 #else  /* !__MSDOS__ */
+# if defined(__APPLE__)
+  else if (!_is_posix_shell (shell))
+    goto slow;
+# else
   else if (strcmp (shell, default_shell))
     goto slow;
+# endif /* !__APPLE__ */
 #endif /* !__MSDOS__ && !__EMX__ */
 #endif /* not WINDOWS32 */
 
