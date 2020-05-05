@@ -328,7 +328,7 @@
 		FC90BD73149FD968009C78FA /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
+				INSTALL_PATH = "$(DEVELOPER_INSTALL_DIR)/usr/bin";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
