@@ -1352,13 +1352,19 @@ start_job_command (struct child *child)
       posix_spawnattr_getflags(&attr, &spawn_flags);
       spawn_flags |= POSIX_SPAWN_SETSIGDEF | POSIX_SPAWN_SETSIGMASK;
       posix_spawnattr_setflags(&attr, spawn_flags);
-      rc = posix_spawnp(&child->pid, argv[0], &file_actions, &attr, argv, child->environment);
+      while ((rc = posix_spawnp(&child->pid, argv[0], &file_actions,
+                                &attr, argv, child->environment)) == EINTR) {
+        continue;
+      }
       environ = parent_environ;
       posix_spawnattr_destroy(&attr);
       posix_spawn_file_actions_destroy(&file_actions);
       if (rc) {
-	error (NILF, _("%s: %s"), argv[0], strerror(rc));
-	rc = posix_spawnp(&child->pid, "/usr/bin/false", NULL, NULL, NULL, NULL);
+        error (NILF, _("%s: %s"), argv[0], strerror(rc));
+        while ((rc = posix_spawnp(&child->pid, "/usr/bin/false", NULL,
+                                  NULL, NULL, NULL)) == EINTR) {
+          continue;
+        }
       }
 #else  /* !USE_POSIX_SPAWN */
       child->pid = vfork ();
