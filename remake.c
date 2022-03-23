@@ -1065,6 +1065,25 @@ touch_file (struct file *file)
   else
 #endif
     {
+#ifdef __APPLE__
+      static time_t now;
+      static struct timeval times[2];
+
+      /*
+       * rdar://87095650 - attempt to update times without physically touching
+       * the file first, falling back to the former method.
+       */
+      if (now == 0)
+	{
+	  time(&now);
+	  memset(&times, 0, sizeof(times));
+	  times[0].tv_sec = times[1].tv_sec = now;
+	}
+
+      if (utimes(file->name, times) == 0)
+	return 0;
+#endif
+
       int fd = open (file->name, O_RDWR | O_CREAT, 0666);
 
       if (fd < 0)

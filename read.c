@@ -1795,7 +1795,15 @@ record_target_var (struct nameseq *filenames, char *defn,
           assert (v != 0);
 
           if (v->flavor == f_simple)
-            v->value = allocated_variable_expand (v->value);
+            {
+              char *valcpy;
+
+              /* rdar://problem/84384999 - we have no reproducer for this one,
+                 but it's patched as a defensive measure. */
+              valcpy = xstrdup(v->value);
+              v->value = allocated_variable_expand (valcpy);
+              free(valcpy);
+            }
           else
             v->value = xstrdup (v->value);
 

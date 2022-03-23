@@ -173,7 +173,13 @@ recursively_expand_for_file (struct variable *v, struct file *file)
   if (v->append)
     value = allocated_variable_append (v);
   else
-    value = allocated_variable_expand (v->value);
+    {
+      char *valcpy = xstrdup(v->value);
+
+      /* rdar://problem/84384999 - v->value may get reassigned here. */
+      value = allocated_variable_expand (valcpy);
+      free(valcpy);
+    }
   v->expanding = 0;
 
   if (set_reading)
@@ -515,6 +521,7 @@ variable_append (const char *name, unsigned int length,
 {
   const struct variable *v;
   char *buf = 0;
+  char *valcpy;
 
   /* If there's nothing left to check, return the empty buffer.  */
   if (!set)
@@ -543,7 +550,10 @@ variable_append (const char *name, unsigned int length,
   if (! v->recursive)
     return variable_buffer_output (buf, v->value, strlen (v->value));
 
-  buf = variable_expand_string (buf, v->value, strlen (v->value));
+  /* rdar://problem/84384999 - v->value may get reassigned here. */
+  valcpy = xstrdup(v->value);
+  buf = variable_expand_string (buf, valcpy, strlen (valcpy));
+  free(valcpy);
   return (buf + strlen (buf));
 }
 
